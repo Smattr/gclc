@@ -503,3 +503,8 @@ void PolyReader::PrintPolynomial(XPolynomial *xp, int level, int index,
     Log::PrintLogF(2, "</polynomial>\n");
   }
 }
+
+void PolyReader::PrintPolynomial(std::shared_ptr<XPolynomial> &xp, int level,
+                                 int index, bool tabular) {
+  PrintPolynomial(xp.get(), level, index, tabular);
+}
