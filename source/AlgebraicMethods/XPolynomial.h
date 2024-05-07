@@ -3,6 +3,7 @@
 #include "Polynomial.h"
 #include "XTerm.h"
 #include <iostream>
+#include <memory>
 #include <string>
 
 class XPolynomial : public Polynomial
@@ -16,7 +17,7 @@ public:
 	~XPolynomial();
 	XPolynomial(REAL x);
 	XPolynomial(bool free, int index);
-	XPolynomial* Clone() override;
+	std::shared_ptr<XPolynomial> Clone() override;
 
 	TERM_TYPE Type() const override;
 
@@ -41,4 +42,4 @@ public:
 	std::string PrintLatex() const;
 };
 
-typedef std::vector<XPolynomial*> vxp;
+typedef std::vector<std::shared_ptr<XPolynomial>> vxp;

@@ -65,7 +65,6 @@ bool Groebner::GroebnerBasis(vxp &vxps) {
   Log::PrintLogF(4, "Groebner::GroebnerBasis\n\n");
 
   uint k, i;
-  XPolynomial *xp;
 
   // reduce all polynomials on the beginning
   // should make things faster
@@ -176,12 +175,11 @@ bool Groebner::GroebnerBasis(vxp &vxps) {
       }
       m1->Dispose();
 
-      xp = vxps[i]->Clone();
+      std::shared_ptr<XPolynomial> xp = vxps[i]->Clone();
       xp->SPol(vxps[k]);
       _maxt = std::max(_maxt, xp->GetTotalTermCount());
 
-      if (!Groebner::FullReduce(vxps, xp, -1)) {
-        xp->Dispose();
+      if (!Groebner::FullReduce(vxps, xp.get(), -1)) {
         stopProcessing = true;
       }
       Log::PrintLogF(4, "   After FullReduce:\n\n");
@@ -197,7 +195,6 @@ bool Groebner::GroebnerBasis(vxp &vxps) {
             stopProcessing = true;
           }
         } else {
-          xp->Dispose();
           Log::PrintLogF(
               1, "Reduced to zero, polynomial not added to the set.\n\n");
         }
@@ -243,7 +240,7 @@ bool Groebner::GroebnerBasis(vxp &vxps) {
 // polynomials
 //
 bool Groebner::ReduceAll(vxp &vxps) {
-  std::vector<XPolynomial *>::iterator it = vxps.begin();
+  auto it = vxps.begin();
   uint k = 0;
 
   Log::PrintLogF(5, "REDUCE ALL\n\n");
@@ -254,13 +251,12 @@ bool Groebner::ReduceAll(vxp &vxps) {
   while (it != vxps.end() && maxIter != 0) {
     maxIter--;
 
-    XPolynomial *xp = (*it);
+    XPolynomial *xp = it->get();
     if (xp->IsZero()) {
       // should not happen!
       Log::PrintLogF(4, "ZERO !!!");
       throw - 1;
       /*
-                        xp->Dispose();
                         vxps.erase(it);
                         it = vxps.begin();
                         continue;
@@ -274,7 +270,6 @@ bool Groebner::ReduceAll(vxp &vxps) {
       // check did polynomial vanished
       if (xp->IsZero()) {
         Log::PrintLogF(4, "      erasing polynomial %d\n\n", k);
-        xp->Dispose();
         vxps.erase(it);
       }
 
@@ -490,7 +485,7 @@ bool Groebner::Reduce(XPolynomial *xp1, XPolynomial *xp2) {
   g->Divide(c2f2);
 
   // multiply first with c2 (must create c2 first)
-  XPolynomial *pc2 = new XPolynomial();
+  auto pc2 = std::make_shared<XPolynomial>();
   XTerm *tc2 = new XTerm();
   std::shared_ptr<UPolynomialFraction> c2Clone = c2f2->GetUFraction()->Clone();
   tc2->SetUFraction(c2Clone);
@@ -498,22 +493,19 @@ bool Groebner::Reduce(XPolynomial *xp1, XPolynomial *xp2) {
   tc2->Dispose();
 
   // multiply second with c1g (create c1 and g)
-  XPolynomial *pc1g = new XPolynomial();
+  auto pc1g = std::make_shared<XPolynomial>();
   XTerm *tc1g = g->Clone();
   std::shared_ptr<UPolynomialFraction> c1Clone = c1f1->GetUFraction()->Clone();
   tc1g->SetUFraction(c1Clone);
   pc1g->AddTerm(tc1g);
   tc1g->Dispose();
-  XPolynomial *xp2Clone = xp2->Clone();
+  std::shared_ptr<XPolynomial> xp2Clone = xp2->Clone();
   xp2Clone->Mul(pc1g);
-  pc1g->Dispose();
 
   xp1->Mul(pc2);
-  pc2->Dispose();
 
   // subtract
   xp1->Subtract(xp2Clone);
-  xp2Clone->Dispose();
   g->Dispose();
 
   _maxt = std::max(_maxt, xp1->GetTotalTermCount());
@@ -559,33 +551,31 @@ bool Groebner::GroebnerBasis2(vxp &vxps) {
         Log::OutputEnumItem(
             "Creating S-polynomial from the pair $(p_{%d}, p_{%d}$).", ii, jj);
         // don't process this pair if gcd cond
-        XPolynomial *xp1 = vxps[ii];
-        XPolynomial *xp2 = vxps[jj];
+        XPolynomial *xp1 = vxps[ii].get();
+        XPolynomial *xp2 = vxps[jj].get();
         if (GCDCondition(xp1, xp2)) {
           Log::OutputText("Skipping pair $p_{%d}$ and $p_{%d}$ because gcd of "
                           "their leading monoms is zero.",
                           ii, jj);
           continue;
         }
-        XPolynomial *xp = xp1->Clone();
+        std::shared_ptr<XPolynomial> xp = xp1->Clone();
         xp->SPol(xp2);
-        // Reduce(xp, xp2);
+        // Reduce(xp.get(), xp2);
 
         Log::OutputText("Forming S-pol of $p_{%d}$ and $p_{%d}$:", ii, jj);
         PolyReader::PrintPolynomial(xp, 1);
 
         if (!ITimeout::CheckTimeoutSafe()) {
-          xp->Dispose();
           _bTimeout = true;
           Log::OutputEnumEnd("enumerate");
           return false;
         }
 
         // do reduction
-        FullReduce(vxps, xp, -2);
+        FullReduce(vxps, xp.get(), -2);
 
         if (!ITimeout::CheckTimeoutSafe()) {
-          xp->Dispose();
           Log::OutputEnumEnd("enumerate");
           return false;
         }
@@ -593,14 +583,9 @@ bool Groebner::GroebnerBasis2(vxp &vxps) {
         if (xp && !xp->IsZero()) {
           // should be add
           pairs.push_back(xp);
-          xp->AddRef();
           Log::OutputText("S-pol added.");
         } else {
           Log::OutputText("Reduced to zero.");
-        }
-
-        if (xp) {
-          xp->Dispose();
         }
       }
     }

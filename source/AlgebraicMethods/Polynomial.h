@@ -14,7 +14,7 @@
 * XPolynomial and UPolynomial classes.
 *
 **************************************************************/
-class Polynomial : public Object
+class Polynomial
 {
 protected:
 
@@ -30,7 +30,7 @@ public:
 	Polynomial();
 	virtual ~Polynomial();
 
-	virtual Polynomial* Clone() = 0;
+	virtual std::shared_ptr<Polynomial> Clone() = 0;
 
 	virtual TERM_TYPE Type() const = 0;
 

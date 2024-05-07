@@ -103,8 +103,8 @@ XPolynomial *XPolynomial::CreatePolynomialCondition(bool f1, uint index1,
   return xp;
 }
 
-XPolynomial *XPolynomial::Clone() {
-  XPolynomial *xpClone = new XPolynomial();
+std::shared_ptr<XPolynomial> XPolynomial::Clone() {
+  auto xpClone = std::make_shared<XPolynomial>();
 
   _terms->EnumReset();
   while (_terms->EnumMoveNext()) {

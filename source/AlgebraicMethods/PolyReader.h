@@ -17,17 +17,17 @@ private:
     static void _Error(const char* msg);
     static void _Assert(bool assert, const char* msg);
 
-	static XPolynomial* _ReadXPolynomial(char* stream, int start, int end);
+	static std::shared_ptr<XPolynomial> _ReadXPolynomial(char* stream, int start, int end);
 	static XTerm* _ReadXTerm(char* stream, int s, int e);
 	static std::shared_ptr<UPolynomialFraction> _ReadUFraction(char* stream, int s, int e);
-	static UPolynomial* _ReadUPolynomial(char* stream, int s, int e);
+	static std::shared_ptr<UPolynomial> _ReadUPolynomial(char* stream, int s, int e);
 	static UTerm* _ReadUTerm(char* stream, int s, int e);
 	static std::shared_ptr<Power> _ReadUPower(char* stream, int s, int e);
 	static std::shared_ptr<Power> _ReadXPower(char* stream, int s, int e);
 
 
 public:
-	static XPolynomial* ReadXPolynomial(char* stream);
+	static std::shared_ptr<XPolynomial> ReadXPolynomial(char* stream);
 	static void PrintPolynomials(std::vector<XPolynomial*>& vpols, int level = 0, int size = -1);
 	static void PrintPolynomial(XPolynomial* xp, int level = 0, int index = -1, bool tabular = false);
 	static void PrintPolynomial(std::shared_ptr<XPolynomial> &xp, int level = 0,

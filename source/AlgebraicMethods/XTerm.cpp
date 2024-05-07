@@ -73,12 +73,10 @@ XTerm* XTerm::CreatePolynomialConditionTerm(bool f1, uint index1, bool f2, uint 
 	{
 		// there will be non-empty fraction
 		upf = std::make_shared<UPolynomialFraction>();
-		UPolynomial* up = new UPolynomial();
+		auto up = std::make_shared<UPolynomial>();
 		upf->SetNumerator(up);
-		up->Dispose();
-		up = new UPolynomial(1);
+		up = std::make_shared<UPolynomial>(1);
 		upf->SetDenominator(up);
-		up->Dispose();
 	}
 	else
 	{
@@ -363,12 +361,11 @@ void XTerm::Merge(Term* t)
 	n1->Mul(d2);
 
 	// create second sumand, n2*d1
-	UPolynomial* n2clone = n2->Clone();
+	std::shared_ptr<UPolynomial> n2clone = n2->Clone();
 	n2clone->Mul(d1);
 
 	// add n2*d1 to the n1
 	n1->Add(n2clone);
-	n2clone->Dispose();
 
 	// multiply d1 with d2
 	d1->Mul(d2);

@@ -1,4 +1,5 @@
 #include "UPolynomial.h"
+#include <memory>
 
 UPolynomial::UPolynomial()
 {
@@ -22,9 +23,9 @@ UPolynomial::UPolynomial(REAL cf)
 	COSTR("upoly");
 }
 
-UPolynomial* UPolynomial::Clone()
+std::shared_ptr<UPolynomial> UPolynomial::Clone()
 {
-	UPolynomial* upClone = new UPolynomial();
+	auto upClone = std::make_shared<UPolynomial>();
 
 	_terms->EnumReset();
 	while (_terms->EnumMoveNext())

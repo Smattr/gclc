@@ -30,14 +30,7 @@ void CAlgMethod::_Initialize() {
 
 void CAlgMethod::CleanUp() {
   int ii, size;
-  for (ii = 0, size = vxps.size(); ii < size; ii++) {
-    XPolynomial *xp = vxps[ii];
-    xp->Dispose();
-  }
   vxps.clear();
-  for (ii = 0, size = vxpConjectures.size(); ii < size; ii++) {
-    vxpConjectures[ii]->Dispose();
-  }
   vxpConjectures.clear();
 
   // constants
@@ -1488,17 +1481,18 @@ void CAlgMethod::_ExtractConditionPolynomials() {
 // If parameter check is true, then check is there same
 // condition as the newly added (don't add twice the same condition)
 //
-void CAlgMethod::_AddCondition(XPolynomial *xp, bool check, vxp *polySystem) {
+void CAlgMethod::_AddCondition(std::shared_ptr<XPolynomial> xp, bool check,
+                               vxp *polySystem) {
   bool add = true;
   int ii, size;
-  XPolynomial *xp1 = NULL;
 
   if (xp == NULL || xp->IsZero()) {
     add = false;
   } else if (check) {
     // is there same condition
     for (ii = 0, size = vxps.size(); add && ii < size; ii++) {
-      xp1 = polySystem ? polySystem->at(ii)->Clone() : vxps[ii]->Clone();
+      std::shared_ptr<XPolynomial> xp1 = polySystem ? polySystem->at(ii)->Clone()
+                                                    : vxps[ii]->Clone();
       xp1->Subtract(xp);
 
       add = add && !xp1->IsZero();
@@ -1507,20 +1501,17 @@ void CAlgMethod::_AddCondition(XPolynomial *xp, bool check, vxp *polySystem) {
         Log::PrintLogF(1, "Rejected, there is already same condition!\n\n");
       }
 
-      xp1->Dispose();
-
       if (add) {
         // check reverse sign!
-        xp1 = polySystem ? polySystem->at(ii)->Clone() : vxps[ii]->Clone();
-        xp1->Add(xp);
+        std::shared_ptr<XPolynomial> xp2 = polySystem ? polySystem->at(ii)->Clone()
+                                                      : vxps[ii]->Clone();
+        xp2->Add(xp);
 
-        add = add && !xp1->IsZero();
+        add = add && !xp2->IsZero();
 
         if (!add) {
           Log::PrintLogF(1, "Rejected, there is already same condition!\n\n");
         }
-
-        xp1->Dispose();
       }
     }
   }
@@ -1532,8 +1523,6 @@ void CAlgMethod::_AddCondition(XPolynomial *xp, bool check, vxp *polySystem) {
     } else {
       vxps.push_back(xp);
     }
-  } else if (xp) {
-    xp->Dispose();
   }
 }
 
@@ -2119,9 +2108,9 @@ void CAlgMethod::_ExtractConjecturePolynomial() {
 
 // ----------------------------------------------------------------------------
 
-XPolynomial *
+std::shared_ptr<XPolynomial>
 CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
-  XPolynomial *xp = NULL, *xp1 = NULL, *xp2 = NULL, *xp3 = NULL;
+  std::shared_ptr<XPolynomial> xp = NULL;
   Constant *c = NULL;
   Point *p1, *p2, *p3, *p4;
 
@@ -2134,7 +2123,7 @@ CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
       c = new Constant(e->GetName(), ++lastFreeIndex);
       _constants.emplace_back(c);
     }
-    return new XPolynomial(true, c->Index);
+    return std::make_shared<XPolynomial>(true, c->Index);
     break;
   case ep_inequality:
   case ep_unknown:
@@ -2145,28 +2134,28 @@ CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
     // create real number
     xp = new XPolynomial(e->GetNumber());
     break;
-  case ep_equality:
+  case ep_equality: {
     // E1 - E2
     xp = this->_ExtractPolynomialExpression(e->GetArgP(0));
-    xp1 = this->_ExtractPolynomialExpression(e->GetArgP(1));
+    std::shared_ptr<XPolynomial> xp1 = this->_ExtractPolynomialExpression(e->GetArgP(1));
     if (xp == NULL || xp1 == NULL) {
       Log::PrintLogF(0, "Expression is NULL!\n");
       throw - 1;
     }
-    xp->Subtract(xp1);
-    xp1->Dispose();
+    xp->Subtract(xp1.get());
     break;
-  case ep_mult:
+  }
+  case ep_mult: {
     // E1 * E2
     xp = this->_ExtractPolynomialExpression(e->GetArgP(0));
-    xp1 = this->_ExtractPolynomialExpression(e->GetArgP(1));
+    std::shared_ptr<XPolynomial> xp1 = this->_ExtractPolynomialExpression(e->GetArgP(1));
     if (xp == NULL || xp1 == NULL) {
       Log::PrintLogF(0, "Expression is NULL!\n");
       throw - 1;
     }
-    xp->Mul(xp1);
-    xp1->Dispose();
+    xp->Mul(xp1.get());
     break;
+  }
   case ep_ratio:
     // E1 / E2
     // this is tricky one
@@ -2194,7 +2183,7 @@ CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
                                 &p2->X, &p3->X, false);
     xp->Mul(0.5);
     break;
-  case ep_s4:
+  case ep_s4: {
     // P(P1 P2 P3 P4)
     p1 = _FindPoint(e->GetArgName(0));
     p2 = _FindPoint(e->GetArgName(1));
@@ -2203,13 +2192,16 @@ CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
 
     xp = this->_HelperCondition(&p1->X, &p2->X, &p2->Y, &p3->Y, &p1->Y, &p2->Y,
                                 &p2->X, &p3->X, false);
-    xp1 = this->_HelperCondition(&p1->X, &p3->X, &p3->Y, &p4->Y, &p1->Y, &p3->Y,
-                                 &p3->X, &p4->X, false);
-    xp->Add(xp1);
-    xp1->Dispose();
+    std::shared_ptr<XPolynomial>xp1 = this->_HelperCondition(&p1->X, &p3->X,
+                                                             &p3->Y, &p4->Y,
+                                                             &p1->Y, &p3->Y,
+                                                             &p3->X, &p4->X,
+                                                             false);
+    xp->Add(xp1.get());
     xp->Mul(0.5);
     break;
-  case ep_p3:
+  }
+  case ep_p3: {
     // pythagoras difference PD(P1 P2 P3)
     // P1P2^2 + P2P3^2 - P3P1^2
     p1 = _FindPoint(e->GetArgName(0));
@@ -2217,13 +2209,12 @@ CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
     p3 = _FindPoint(e->GetArgName(2));
 
     xp = this->_SegmentSize(p1, p2);
-    xp1 = this->_SegmentSize(p2, p3);
-    xp->Add(xp1);
-    xp1->Dispose();
+    std::shared_ptr<XPolynomial> xp1 = this->_SegmentSize(p2, p3);
+    xp->Add(xp1.get());
     xp1 = this->_SegmentSize(p3, p1);
-    xp->Subtract(xp1);
-    xp1->Dispose();
+    xp->Subtract(xp1.get());
     break;
+  }
   case ep_p4:
     // PD(P1 P2 P3 P4)
     Log::PrintLogF(0, "Not implemented yet %d!\n\n", e->GetType());
@@ -2275,35 +2266,33 @@ CAlgMethod::_ExtractPolynomialExpression(CGCLCProverExpression *e) {
     xp = _DiffPoints(&_FindPoint(e->GetArgName(0))->Y,
                      &_FindPoint(e->GetArgName(1))->Y);
     break;
-  case ep_sum:
+  case ep_sum: {
     // E1 + E2
     xp = this->_ExtractPolynomialExpression(e->GetArgP(0));
-    xp1 = this->_ExtractPolynomialExpression(e->GetArgP(1));
+    std::shared_ptr<XPolynomial> xp1 = this->_ExtractPolynomialExpression(e->GetArgP(1));
     if (xp == NULL || xp1 == NULL) {
       Log::PrintLogF(0, "Expression is NULL!\n");
       throw - 1;
     }
     xp->Add(xp1);
-    xp1->Dispose();
     break;
-  case ep_algsumzero3:
+  }
+  case ep_algsumzero3: {
     /* xp =_AlgSumZero3Expression(_FindPoint(e->GetArgName(0)),
        _FindPoint(e->GetArgName(1)), _FindPoint(e->GetArgName(2)),
        _FindPoint(e->GetArgName(3)), _FindPoint(e->GetArg(4)->GetName()),
        _FindPoint(e->GetArg(5)->GetName()));
     */
-    xp1 = this->_ExtractPolynomialExpression(e->GetArgP(0));
-    xp2 = this->_ExtractPolynomialExpression(e->GetArgP(1));
-    xp3 = this->_ExtractPolynomialExpression(e->GetArgP(2));
+    std::shared_ptr<XPolynomial> xp1 = this->_ExtractPolynomialExpression(e->GetArgP(0));
+    std::shared_ptr<XPolynomial> xp2 = this->_ExtractPolynomialExpression(e->GetArgP(1));
+    std::shared_ptr<XPolynomial> xp3 = this->_ExtractPolynomialExpression(e->GetArgP(2));
     if (xp1 == NULL || xp2 == NULL || xp3 == NULL) {
       Log::PrintLogF(1, "ep_algsumzero3: one of subexpressions is NULL!\n");
       throw - 1;
     }
-    xp = _AlgSumZero3Expression(xp1, xp2, xp3);
-    xp1->Dispose();
-    xp2->Dispose();
-    xp3->Dispose();
+    xp = _AlgSumZero3Expression(xp1.get(), xp2.get(), xp3.get());
     break;
+  }
   case ep_angle:
     Log::PrintLogF(1, "Angle command should be rationalized!\n");
     throw - 1;

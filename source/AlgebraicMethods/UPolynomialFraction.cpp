@@ -4,7 +4,6 @@
 #include <utility>
 
 UPolynomialFraction::UPolynomialFraction()
-: _num(NULL), _den(NULL)
 {
 	COSTR("upolyf");
 }
@@ -14,23 +13,14 @@ UPolynomialFraction::UPolynomialFraction()
 //
 UPolynomialFraction::UPolynomialFraction(REAL cf)
 {
-	_num = new UPolynomial(cf);
-	_den = new UPolynomial(1);
+	_num = std::make_shared<UPolynomial>(cf);
+	_den = std::make_shared<UPolynomial>(1);
 
 	COSTR("upolyf");
 }
 
 UPolynomialFraction::~UPolynomialFraction()
 {
-	if (_num)
-	{
-		_num->Dispose();
-	}
-	if (_den)
-	{
-		_den->Dispose();
-	}
-
 	DESTR("upolyf");
 }
 
@@ -39,51 +29,33 @@ std::shared_ptr<UPolynomialFraction> UPolynomialFraction::Clone()
 	std::shared_ptr<UPolynomialFraction> ufClone =
 	  std::make_shared<UPolynomialFraction>();
 
-	UPolynomial* upNumClone = this->GetNumerator()->Clone();
-	UPolynomial* upDenClone = this->GetDenominator()->Clone();
+	std::shared_ptr<UPolynomial> upNumClone = this->GetNumerator()->Clone();
+	std::shared_ptr<UPolynomial> upDenClone = this->GetDenominator()->Clone();
 
 	ufClone->SetNumerator(upNumClone);
-	upNumClone->Dispose();
 
 	ufClone->SetDenominator(upDenClone);
-	upDenClone->Dispose();
 
 	return ufClone;
 }
 
 UPolynomial* UPolynomialFraction::GetNumerator() const
 {
-	return _num;
+	return _num.get();
 }
 
 UPolynomial* UPolynomialFraction::GetDenominator() const
 {
-	return _den;
+	return _den.get();
 }
 
-void UPolynomialFraction::SetNumerator(UPolynomial* up)
+void UPolynomialFraction::SetNumerator(std::shared_ptr<UPolynomial> up)
 {
-	if (up)
-	{
-		up->AddRef();
-	}
-	if (_num)
-	{
-		_num->Dispose();
-	}
 	_num = up;
 }
 
-void UPolynomialFraction::SetDenominator(UPolynomial* up)
+void UPolynomialFraction::SetDenominator(std::shared_ptr<UPolynomial> up)
 {
-	if (up)
-	{
-		up->AddRef();
-	}
-	if (_den)
-	{
-		_den->Dispose();
-	}
 	_den = up;
 }
 

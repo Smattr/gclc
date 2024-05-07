@@ -212,7 +212,7 @@ private:
 
   void _ExtractConditionPolynomials();
   void _ExtractConjecturePolynomial();
-  XPolynomial *_ExtractPolynomialExpression(CGCLCProverExpression *e);
+  std::shared_ptr<XPolynomial> _ExtractPolynomialExpression(CGCLCProverExpression *e);
   bool _CollinearPoints(Point *a, Point *b, Point *c);
 
   CGCLCProverExpression *_CloneExpression(CGCLCProverExpression *e);
@@ -225,7 +225,7 @@ private:
   void _PrintConjecture(const CGCLCProverExpression &e, int level, int space);
 
   // conditions
-  void _AddCondition(XPolynomial *xp, bool check = true,
+  void _AddCondition(std::shared_ptr<XPolynomial> xp, bool check = true,
                      vxp *polySystem = NULL);
   XPolynomial *_SegmentSize(Point *p, Point *q);
   XPolynomial *_EqualTangensCondition(Line *l, Point *b, Point *a, Point *c);

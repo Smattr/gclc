@@ -163,10 +163,9 @@ int Polynomial::Subtract(Polynomial* up)
 {
 	int status = 0;
 
-	Polynomial* upClone = up->Clone();
+	std::shared_ptr<Polynomial> upClone = up->Clone();
 	upClone->Inverse();
-	status = this->Add(upClone);
-	upClone->Dispose();
+	status = this->Add(upClone.get());
 
 	return status;
 }

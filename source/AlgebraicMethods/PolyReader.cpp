@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-XPolynomial *PolyReader::ReadXPolynomial(char *stream) {
+std::shared_ptr<XPolynomial> PolyReader::ReadXPolynomial(char *stream) {
   int start = 0, end = 0;
   while (stream[end++])
     ;
@@ -15,8 +15,8 @@ XPolynomial *PolyReader::ReadXPolynomial(char *stream) {
 // XPolynomial is a comma separated list of xterms
 // {XT1, XT2, ...}
 //
-XPolynomial *PolyReader::_ReadXPolynomial(char *stream, int start, int end) {
-  XPolynomial *xpol = new XPolynomial();
+std::shared_ptr<XPolynomial> PolyReader::_ReadXPolynomial(char *stream, int start, int end) {
+  auto xpol = std::make_shared<XPolynomial>();
 
   int s1, e1 = start;
 
@@ -119,7 +119,7 @@ std::shared_ptr<UPolynomialFraction> PolyReader::_ReadUFraction(char *stream, in
   e1 = _GotoCloseBracket(stream, s1 + 1, e);
   _Assert(e1 >= 0, "Right bracket missing!");
 
-  UPolynomial *up1 = _ReadUPolynomial(stream, s1, e1);
+  std::shared_ptr<UPolynomial> up1 = _ReadUPolynomial(stream, s1, e1);
 
   // read denominator
   s1 = _GotoOpenBracket(stream, e1 + 1, e);
@@ -128,17 +128,15 @@ std::shared_ptr<UPolynomialFraction> PolyReader::_ReadUFraction(char *stream, in
   e1 = _GotoCloseBracket(stream, s1 + 1, e);
   _Assert(e1 >= 0, "Right bracket missing!");
 
-  UPolynomial *up2 = _ReadUPolynomial(stream, s1, e1);
+  std::shared_ptr<UPolynomial> up2 = _ReadUPolynomial(stream, s1, e1);
 
   // create UFraction
   std::shared_ptr<UPolynomialFraction> uf =
     std::make_shared<UPolynomialFraction>();
 
   uf->SetNumerator(up1);
-  up1->Dispose();
 
   uf->SetDenominator(up2);
-  up2->Dispose();
 
   return uf;
 }
@@ -146,14 +144,14 @@ std::shared_ptr<UPolynomialFraction> PolyReader::_ReadUFraction(char *stream, in
 //
 // UPolynomial is a list of UTerms
 //
-UPolynomial *PolyReader::_ReadUPolynomial(char *stream, int s, int e) {
+std::shared_ptr<UPolynomial> PolyReader::_ReadUPolynomial(char *stream, int s, int e) {
 #if DESER_DBG
   // debug
   Log::PrintLogF(0, "up: ");
   _Print(stream, s, e);
 #endif
 
-  UPolynomial *upol = new UPolynomial();
+  auto upol = std::make_shared<UPolynomial>();
 
   int s1, e1 = s;
 

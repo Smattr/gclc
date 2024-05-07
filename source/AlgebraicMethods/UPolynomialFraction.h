@@ -5,10 +5,10 @@
 class UPolynomialFraction
 {
 	// numerator
-	UPolynomial* _num;
+	std::shared_ptr<UPolynomial> _num;
 
 	// denominator
-	UPolynomial* _den;
+	std::shared_ptr<UPolynomial> _den;
 
 public:
 	UPolynomialFraction();
@@ -19,10 +19,10 @@ public:
 	std::shared_ptr<UPolynomialFraction> Clone();
 
 	UPolynomial* GetNumerator() const;
-	void SetNumerator(UPolynomial* up);
+	void SetNumerator(std::shared_ptr<UPolynomial> up);
 
 	UPolynomial* GetDenominator() const;
-	void SetDenominator(UPolynomial* up);
+	void SetDenominator(std::shared_ptr<UPolynomial> up);
 
 	// arithmetic operations
 	int Mul(UPolynomialFraction* uf);

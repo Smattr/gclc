@@ -20,11 +20,10 @@ bool Reduce::ReduceLineCircleIntersection(
     }
 #endif
 
-    XPolynomial *xp11, *xp12, *xp21, *xp22;
-    xp11 = new XPolynomial(vecPointsFree[0], vecPointsIndex[0]);
-    xp12 = new XPolynomial(vecPointsFree[1], vecPointsIndex[1]);
-    xp21 = new XPolynomial(vecPointsFree[2], vecPointsIndex[2]);
-    xp22 = new XPolynomial(vecPointsFree[3], vecPointsIndex[3]);
+    auto xp11 = std::make_shared<XPolynomial>(vecPointsFree[0], vecPointsIndex[0]);
+    auto xp12 = std::make_shared<XPolynomial>(vecPointsFree[1], vecPointsIndex[1]);
+    auto xp21 = std::make_shared<XPolynomial>(vecPointsFree[2], vecPointsIndex[2]);
+    auto xp22 = std::make_shared<XPolynomial>(vecPointsFree[3], vecPointsIndex[3]);
 
     bool bRet = true;
 
@@ -50,7 +49,7 @@ bool Reduce::ReduceLineCircleIntersection(
 
     xp11->Subtract(xp21);
     Log::PrintLogF(level, "Divide third with x7 - x2:\n\n");
-    XPolynomial* xd1 = new XPolynomial();
+    auto xd1 = std::make_shared<XPolynomial>();
     polySystem[2]->PseudoRemainder(xp11, 7, false, xd1);
     PolyReader::PrintPolynomial(polySystem[2], level);
     Log::PrintLogF(level, "Division remainder:\n\n");
@@ -116,7 +115,7 @@ bool Reduce::ReduceLineCircleIntersection(
     // x is zero - nothing to do
     for (ii = 0; ii <= size - 3; ii++)
     {
-        XPolynomial *x = polySystem[ii];
+        XPolynomial *x = polySystem[ii].get();
         Log::PrintLogF(level, "Reducing with pol %d\n\n", ii);
         PolyReader::PrintPolynomial(x, level);
 
@@ -162,13 +161,13 @@ bool Reduce::ReduceLineCircleIntersection(
     // (e5) last pol should have factor (x11 - x21)
     // (e6) divide with (x11 - x21)
     Log::PrintLogF(level, "dividing last pol with (x11 - x21) (first - third point):\n\n");
-    XPolynomial* xf = xp11->Clone();
+    std::shared_ptr<XPolynomial> xf = xp11->Clone();
     xf->Subtract(xp21);
     Log::PrintLogF(level, "x11 - x21 = \n\n");
     PolyReader::PrintPolynomial(xf, level);
 
     // division result
-    XPolynomial *xd = new XPolynomial();
+    auto xd = std::make_shared<XPolynomial>();
     polySystem[size - 1]->PseudoRemainder(xf, vecPointsIndex[0], vecPointsFree[0], xd);
 
     Log::PrintLogF(level, "division result is = \n\n");
@@ -179,7 +178,6 @@ bool Reduce::ReduceLineCircleIntersection(
         Log::PrintLogF(level, "division was successful, (x11-x21) is real factor\n\n");
 
         // replace two pols
-        polySystem[size - 1]->Dispose();
         polySystem[size - 1] = xd;
 
         bRet = true;
@@ -193,11 +191,6 @@ bool Reduce::ReduceLineCircleIntersection(
     // exit info
     Log::PrintLogF(level, "After reduction:\n\n");
     PolyReader::PrintPolynomials(polySystem, 1);
-
-    xp11->Dispose();
-    xp12->Dispose();
-    xp21->Dispose();
-    xp22->Dispose();
 
     // clean exit
     //throw -1;
