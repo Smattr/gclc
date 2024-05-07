@@ -185,8 +185,8 @@ void CAlgMethod::_ReducibilityLineCircleIntersection(Point *p1, Point *p2,
   }
 
   // push back polynomials into main system
-  for (int ii = 0, size = polySystem.size(); ii < size; ii++) {
-    _AddCondition(polySystem[ii], true);
+  for (XPolynomial *xp : polySystem) {
+    _AddCondition(xp, true);
   }
   polySystem.clear();
 }
