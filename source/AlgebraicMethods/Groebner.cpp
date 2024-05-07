@@ -362,7 +362,7 @@ bool Groebner::FullReduce(vxp &vxps, XPolynomial *xp, int exclude) {
 // May xp1 be reduced with xp2?
 // If yes, return highest index of term in xp1 which may be reduced
 //
-int Groebner::CanReduce(XPolynomial *xp1, XPolynomial *xp2) {
+int Groebner::CanReduce(const XPolynomial *xp1, const XPolynomial *xp2) {
   uint i;
   XTerm *lmp;
 

@@ -16,7 +16,7 @@ private:
   bool ReduceAll(vxp &vxps);
   bool FullReduce(vxp &vxps, XPolynomial *xp, int exclude);
   bool Reduce(XPolynomial *xp1, XPolynomial *xp2);
-  int CanReduce(XPolynomial *xp1, XPolynomial *xp2);
+  int CanReduce(const XPolynomial *xp1, const XPolynomial *xp2);
   bool GroebnerBasis(vxp &vxps);
   bool GroebnerBasis2(vxp &vxps);
   bool _bTimeout;
